@@ -37,7 +37,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}  
 
       - name: chech AWS credentials
-        run: aws ls s3://week10-em-terraform
+        run: aws s3 ls
 
 
 
