@@ -37,9 +37,9 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}  
 
       - name: chech AWS credentials
-        run: aws ls s3    
+        run: aws ls s3://week10-em-terraform
 
 
 
       - name: Build image
-        run: docker build -t kserge2001/portcicd .
+        run: docker build -t EsthaDevops2022/portcicd .
