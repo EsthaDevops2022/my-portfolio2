@@ -16,6 +16,9 @@ env:
   AWS_REGION: us-east-1
   ACCOUNT_ID: $ {{ secrets.ACCOUNT_ID }}           
   ECR_REPO: ${{ secrets.ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/dev
+  IMAGE_TAG: ${{ github.sha }}
+  cluster: nginx-fargate-cluster
+  service: nginx-fargate-service
 
 
 jobs:
@@ -60,4 +63,28 @@ jobs:
       - name: Push Docker image to Amazon ECR
         run: |
           docker push ${{ env.ECR_REPO }}:latest
+
+  ecs_deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}  
+
+      - name: Update ECS task definition
+        run: |
+             sed -i "s|TAG_PLACEHOLDER|${{ env.IMAGE_TAG }}|g" nginx-fargate-task.json 
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          cluster: ${{ env.cluster }}
+          service: ${{ env.service }}
+          task-definition: ${{ github.workspace }}/nginx-fargate-task.json
+          wait-for-service-stability: true
+          force-new-deployment: true        
 
